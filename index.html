@@ -12,10 +12,10 @@
 
 <div id="app">
     <div class="cart">
-        <p>Cart({{ cart }})</p>
+        <p>Cart({{ cart.length }})</p>
     </div>
 
-    <product :premium="premium"></product>
+    <product :premium="premium" @add-to-cart="updateCart" @remove-from-cart="removeFromCart"></product>
 </div>
 
 <script type="application/javascript" src="node_modules/vue/dist/vue.js"></script>
