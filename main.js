@@ -1,3 +1,5 @@
+var evenBus = new Vue();
+
 Vue.component('product', {
     template: `
         <div class="product">
@@ -32,20 +34,8 @@ Vue.component('product', {
                       Add to Cart
               </button>
             </div>
-            
-            <div>
-                <h2>Reviews</h2>
-                <p v-if="!reviews || !reviews.length">There are no reviews yet.</p>
-                <ul>
-                    <li v-for="review in reviews">
-                        <p>{{ review.name }}</p>
-                        <p>Rating: {{ review.rating }}</p>
-                        <p>{{ review.review }}</p>
-                    </li>
-                </ul>
-            </div>
-            
-            <product-review @review-submitted="addReview"></product-review>
+
+            <product-tabs :reviews="reviews"></product-tabs>
         </div>
     `,
     props: {
@@ -53,6 +43,11 @@ Vue.component('product', {
             type: Boolean,
             required: true
         }
+    },
+    mounted() {
+        evenBus.$on('review-submitted', productReview => {
+            this.reviews.push(productReview);
+        });
     },
     data() {
         return {
@@ -83,9 +78,6 @@ Vue.component('product', {
         },
         updateProduct(variantIndex) {
             this.selectedVariant = variantIndex;
-        },
-        addReview(productReview) {
-            this.reviews.push(productReview);
         }
     },
     computed: {
@@ -163,16 +155,57 @@ Vue.component('product-review', {
                     rating: this.rating
                 };
 
-                this.$emit('review-submitted', productReview);
+                evenBus.$emit('review-submitted', productReview);
 
                 this.name = null;
                 this.review = null;
                 this.rating = null;
+                this.errors = [];
             } else {
                 if(!this.name) this.errors.push("Name required.");
                 if(!this.review) this.errors.push("Review required.");
                 if(!this.rating) this.errors.push("Rating required.");
             }
+        }
+    }
+});
+
+Vue.component('product-tabs', {
+    template: `
+        <div>
+            <span class="tab" 
+                  v-for="(tab, index) in tabs" 
+                  :key="index" 
+                  @click="selectedTab = tab" 
+                  :class="{ activeTab: selectedTab === tab }">{{ tab }}</span>
+                  
+            <div v-show="selectedTab === 'Reviews'">
+                <p v-if="!reviews || !reviews.length">There are no reviews yet.</p>
+                <ul>
+                    <li v-for="review in reviews">
+                        <p>{{ review.name }}</p>
+                        <p>Rating: {{ review.rating }}</p>
+                        <p>{{ review.review }}</p>
+                    </li>
+                </ul>
+            </div>
+            
+            <div v-show="selectedTab === 'Make a Review'">
+                <product-review></product-review>
+            </div>
+        </div>
+    `,
+    props: {
+      reviews: {
+          type: Array,
+          required: true,
+          default: []
+      }
+    },
+    data() {
+        return {
+            tabs: ['Reviews', 'Make a Review'],
+            selectedTab: 'Reviews'
         }
     }
 });
